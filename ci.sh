@@ -96,7 +96,7 @@ export CLANG_TRIPLE=aarch64-linux-gnu-
 export CC=$PWD/Clang/bin/clang
 
 # Cross Compiler Setup
-export CROSS_COMPILE="$PWD/Toolchain/bin/aarch64-elf-"
+export CROSS_COMPILE="$PWD/Toolchain/bin/aarch64-linux-android-"
 export CROSS_COMPILE_ARM32="$PWD/Toolchain-32/bin/arm-eabi-"
 
 # Customize Build Host and User
@@ -131,7 +131,7 @@ tg_channelcast "<b>Nito Kernel $VERSION_TG</b> new build!" \
 		"Under commit <b>$(git log --pretty=format:'%h' -1)</b>"
 
 # Clone Toolchain
-git clone https://github.com/arter97/arm64-gcc --depth=1 Toolchain
+git clone https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9 --depth=1 Toolchain
 git clone https://github.com/arter97/arm32-gcc --depth=1 Toolchain-32
 git clone https://github.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-6443078 --depth=1 Clang
 
@@ -139,7 +139,7 @@ git clone https://github.com/crdroidandroid/android_prebuilts_clang_host_linux-x
 export KBUILD_COMPILER_STRING=$($CC --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
 
 # Make Kernel
-make O=out vince-perf_defconfig -j$(grep -c '^processor' /proc/cpuinfo) || finerr
+make O=out cezanne_user_defconfig -j$(grep -c '^processor' /proc/cpuinfo) || finerr
 make O=out -j$(grep -c '^processor' /proc/cpuinfo) || finerr
 
 # Calc Build Used Time

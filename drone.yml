@@ -16,4 +16,4 @@ steps:
       - ./ci.sh
     when:
       branch:
-        - _t
+        - cezanne-q-oss
