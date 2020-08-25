@@ -97,7 +97,7 @@ export CC=$PWD/Clang/bin/clang
 
 # Cross Compiler Setup
 export CROSS_COMPILE="$PWD/Toolchain/bin/aarch64-linux-android-"
-export CROSS_COMPILE_ARM32="$PWD/Toolchain-32/bin/arm-eabi-"
+# export CROSS_COMPILE_ARM32="$PWD/Toolchain-32/bin/arm-eabi-"
 
 # Customize Build Host and User
 export KBUILD_BUILD_USER="Shining Star"
@@ -132,8 +132,8 @@ tg_channelcast "<b>Nito Kernel $VERSION_TG</b> new build!" \
 
 # Clone Toolchain
 git clone https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9 --depth=1 Toolchain
-git clone https://github.com/arter97/arm32-gcc --depth=1 Toolchain-32
-git clone https://github.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-6443078 --depth=1 Clang
+# git clone https://github.com/arter97/arm32-gcc --depth=1 Toolchain-32
+git clone https://github.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-5484270 --depth=1 Clang
 
 # Customize Compiler Name
 export KBUILD_COMPILER_STRING=$($CC --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
