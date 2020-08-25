@@ -610,7 +610,6 @@ long pn544_dev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		{
 			p61_access_state_t current_state = P61_STATE_INVALID;
 			p61_get_access_state(pn544_dev, &current_state);
-			dev_warn(&pn544_dev->client->dev, "set power  arg: %u  current state:0x%x\n", arg, current_state);
 			if (arg == 2) {
 				if (current_state &
 				    (P61_STATE_SPI | P61_STATE_SPI_PRIO)

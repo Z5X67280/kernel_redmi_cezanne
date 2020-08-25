@@ -590,33 +590,6 @@ void disp_aal_flip_sram(struct mtk_ddp_comp *comp, struct cmdq_pkt *handle,
 #endif
 }
 
-void disp_aal_first_flip_sram(struct mtk_ddp_comp *comp, struct cmdq_pkt *handle,
-	const char *caller)
-{
-#ifdef CONFIG_MTK_DRE30_SUPPORT
-	u32 hist_apb, hist_int, sram_cfg;
-	phys_addr_t dre3_pa = mtk_aal_dre3_pa(comp);
-
-	if (aal_sram_method != AAL_SRAM_SOF)
-		return;
-
-	if (atomic_cmpxchg(&g_aal_force_hist_apb, 0, 1) == 0) {
-		hist_apb = 0;
-		hist_int = 1;
-	} else if (atomic_cmpxchg(&g_aal_force_hist_apb, 1, 0) == 1) {
-		hist_apb = 1;
-		hist_int = 0;
-	} else {
-		AALERR("[SRAM] Error when get hist_apb in %s", caller);
-	}
-	sram_cfg = (hist_int << 6)|(hist_apb << 5)|(1 << 4);
-	AALFLOW_LOG("[SRAM] hist_apb(%d) hist_int(%d) 0x%08x in %s",
-		hist_apb, hist_int, sram_cfg, caller);
-	cmdq_pkt_write(handle, comp->cmdq_base,
-		dre3_pa + DISP_AAL_SRAM_CFG, sram_cfg, (0x7 << 4));
-#endif
-}
-
 static void mtk_aal_init(struct mtk_ddp_comp *comp,
 	struct mtk_ddp_config *cfg, struct cmdq_pkt *handle)
 {
