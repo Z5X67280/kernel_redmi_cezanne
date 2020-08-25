@@ -1,0 +1,45 @@
+Manifest-Version: 1.0
+Created-By: 1.0 (Android SignApk)
+
+Name: META-INF/com/google/android/updater-script
+SHA1-Digest: surH1Bs4hR30JclyYkFBB7d7164=
+
+Name: anykernel.sh
+SHA1-Digest: bBT+lMM10FZ9RZD5ZatmKqT4vTk=
+
+Name: .gitignore
+SHA1-Digest: 6H2jiy3CgNQm0Ax29SYWuQV/obo=
+
+Name: META-INF/com/google/android/update-binary
+SHA1-Digest: kypeG7uSccwz/q/Lh5D6h6hXcE0=
+
+Name: Makefile
+SHA1-Digest: vh4iNo4+7nuoAcV0U7ex4Nfc8x4=
+
+Name: tools/busybox
+SHA1-Digest: iJ3B+9YUcU5tLtHIJo3JapajN9g=
+
+Name: kernel/treble/msm8953-qrd-sku3-skl-vince-treble.dtb
+SHA1-Digest: sSQQ7Et8Eaq/68B8C2rahAAjwoY=
+
+Name: tools/magiskpolicy
+SHA1-Digest: VfluDLbsqQj/2pC0CXutWtkthRE=
+
+Name: tools/mkbootimg
+SHA1-Digest: TBUOJEBEmd4z0HASmwPi6jO3Hkc=
+
+Name: tools/unpackbootimg
+SHA1-Digest: 5Lz4+mShlPh/sn8Ey0UhGEU1Td4=
+
+Name: tools/ak2-core.sh
+SHA1-Digest: YGeAFlEGYm8LNmF4SuXByHDhe68=
+
+Name: tools/xz
+SHA1-Digest: WVzvPtyYdIkX/XvJwA4TKF6dSeE=
+
+Name: tools/lz4
+SHA1-Digest: tm4ejgZWfiAo6GKuOpaF0S2vH2k=
+
+Name: kernel/Image.gz
+SHA1-Digest: YNpzwKZ8vzZ9fcJaQySzC0fG5XM=
+
