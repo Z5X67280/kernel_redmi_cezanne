@@ -1,0 +1,19 @@
+kind: pipeline
+name: nito_kernel_build_pineline
+ 
+platform:
+  os: linux
+  arch: amd64
+ 
+clone:
+  depth: 1
+ 
+steps:
+  - name: nito
+    image: kdrag0n/debian-kbuild:buster
+    commands:
+      - chmod +x ci.sh
+      - ./ci.sh
+    when:
+      branch:
+        - _t
