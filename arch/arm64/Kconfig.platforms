@@ -98,6 +98,84 @@ config ARCH_MEDIATEK
 	select MTK_TIMER
 	help
 	  Support for Mediatek MT65xx & MT81xx ARMv8 SoCs
+	  
+# ADDED FROM MTK
+
+config MTK_IGNORE_SSBS
+	bool "Mediatek option to ignore SSBS check"
+	help
+	  Sometimes we need to bypass SSBS check manually to
+	  prevent cpu online check from failure. This option
+	  is for that. Please select it if needed. Anything in
+	  doubt, just say N
+
+config MACH_MT6885
+	bool "MediaTek MT6885"
+	select GENERIC_TIME
+	select GENERIC_CLOCKEVENTS
+	select ARCH_HAS_CPUFREQ
+	select ARM_AMBA
+	select CPU_V7
+	select HAVE_SMP
+	select NEED_MACH_MEMORY_H
+	select IRQ_DOMAIN
+	select IRQ_DOMAIN_DEBUG if IRQ_DOMAIN && DEBUG_FS
+	select GENERIC_SCHED_CLOCK
+	select ARMV7_COMPAT
+	select ARMV7_COMPAT_CPUINFO
+	select PINCTRL
+	select PINCTRL_MT6885
+	select MFD_SYSCON
+	select CPU_IDLE
+	select MTK_LM_MODE if !MTK_GMO_RAM_OPTIMIZE
+	select ARM64_CRYPTO
+	select MTK_GIC_TARGET_ALL
+	select MTK_GIC_V3_EXT
+	select ARM_DSU_PMU if ARM64 && PERF_EVENTS
+	select CRYPTO_SHA2_ARM64_CE
+	select CRYPTO_AES_ARM64_CE_BLK
+	select MTK_ES_REG
+	select MTK_CQDMA
+	select MTK_DBGTOP
+	select MTK_L3C_PART
+	select MTK_BOUNCING_CHECK if MTK_AEE_FEATURE
+	select MTK_LM_MODE if !MTK_GMO_RAM_OPTIMIZE
+	select MTK_TIMER_SYSTIMER
+	select MTK_BASE_POWER
+	select ARM_MTK_NEW_ARCH_CPUIDLE
+	select MTK_LPM
+	select MTK_LOW_POWER_MODULE
+	select MTK_LPM_MT6885
+	select MTK_SWPM if !FPGA_EARLY_PORTING
+	select COMMON_CLK_MT6885
+	select DEVAPC_MT6885
+	select DEVMPU_MT6885
+	select OVERLAY_FS
+	select EXT4_FS
+	select EXT4_FS_SECURITY
+	select EXT4_ENCRYPTION
+	select F2FS_FS
+	select F2FS_FS_ENCRYPTION
+	select F2FS_FS_SECURITY
+	select F2FS_FS_XATTR
+	select DM_BOW
+	select MTK_SYSTRACKER_V2
+	select MTK_SECURITY_SW_SUPPORT
+	select MTK_PLAT_SRAM_FLAG
+	select MTK_DEBUG_LATCH
+	select MTK_DFD_INTERNAL_DUMP
+	select MTK_PID_MAP
+	select MTK_CACHE_PARITY_CHECK
+	select HW_RANDOM
+	select HW_RANDOM_MT67XX
+	select ARM64_ERRATUM_1542418
+	select ARM64_ERRATUM_1800710
+	select MTK_CPU_KORO
+        help
+	  This enables support for MediaTek MT6885
+	  Support for aarch64 Architecture
+	  Support for fpga_64_mt6885 related projects
+	  Support for mt6885 related projects
 
 config ARCH_MESON
 	bool "Amlogic Platforms"
