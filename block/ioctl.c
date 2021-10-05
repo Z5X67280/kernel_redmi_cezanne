@@ -424,7 +424,7 @@ static int blkdev_flushbuf(struct block_device *bdev, fmode_t mode,
 		return -EACCES;
 
 	ret = __blkdev_driver_ioctl(bdev, mode, cmd, arg);
-	if (!is_unrecognized_ioctl(ret))
+	if (ret && !is_unrecognized_ioctl(ret))
 		return ret;
 
 	fsync_bdev(bdev);

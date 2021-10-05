@@ -580,6 +580,15 @@ inline int bio_phys_segments(struct request_queue *q, struct bio *bio)
 }
 EXPORT_SYMBOL(bio_phys_segments);
 
+#if defined(CONFIG_MTK_HW_FDE)
+static inline void bio_clone_crypt_info(struct bio *dst, const struct bio *src)
+{
+	/* for FDE */
+	dst->bi_hw_fde = src->bi_hw_fde;
+	dst->bi_key_idx = src->bi_key_idx;
+}
+#endif
+
 /**
  * 	__bio_clone_fast - clone a bio that shares the original bio's biovec
  * 	@bio: destination bio
@@ -608,6 +617,10 @@ void __bio_clone_fast(struct bio *bio, struct bio *bio_src)
 	bio->bi_write_hint = bio_src->bi_write_hint;
 	bio->bi_iter = bio_src->bi_iter;
 	bio->bi_io_vec = bio_src->bi_io_vec;
+
+#if defined(CONFIG_MTK_HW_FDE)
+	bio_clone_crypt_info(bio, bio_src);
+#endif
 
 	bio_clone_blkcg_association(bio, bio_src);
 }
@@ -715,6 +728,10 @@ struct bio *bio_clone_bioset(struct bio *bio_src, gfp_t gfp_mask,
 			return NULL;
 		}
 	}
+
+#if defined(CONFIG_MTK_HW_FDE)
+	bio_clone_crypt_info(bio, bio_src);
+#endif
 
 	bio_clone_blkcg_association(bio, bio_src);
 
