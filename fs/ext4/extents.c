@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2003-2006, Cluster File Systems, Inc, info@clusterfs.com
+ * Copyright (C) 2021 XiaoMi, Inc.
  * Written by Alex Tomas <alex@clusterfs.com>
  *
  * Architecture independence:
@@ -389,7 +390,7 @@ static int ext4_valid_extent(struct inode *inode, struct ext4_extent *ext)
 	 */
 	if (lblock + len <= lblock)
 		return 0;
-	return ext4_inode_block_valid(inode, block, len);
+	return ext4_data_block_valid(EXT4_SB(inode->i_sb), block, len);
 }
 
 static int ext4_valid_extent_idx(struct inode *inode,
@@ -397,7 +398,7 @@ static int ext4_valid_extent_idx(struct inode *inode,
 {
 	ext4_fsblk_t block = ext4_idx_pblock(ext_idx);
 
-	return ext4_inode_block_valid(inode, block, 1);
+	return ext4_data_block_valid(EXT4_SB(inode->i_sb), block, 1);
 }
 
 static int ext4_valid_extent_entries(struct inode *inode,
@@ -554,10 +555,14 @@ __read_extent_tree_block(const char *function, unsigned int line,
 	}
 	if (buffer_verified(bh) && !(flags & EXT4_EX_FORCE_CACHE))
 		return bh;
-	err = __ext4_ext_check(function, line, inode,
-			       ext_block_hdr(bh), depth, pblk);
-	if (err)
-		goto errout;
+	if (!ext4_has_feature_journal(inode->i_sb) ||
+	    (inode->i_ino !=
+	     le32_to_cpu(EXT4_SB(inode->i_sb)->s_es->s_journal_inum))) {
+		err = __ext4_ext_check(function, line, inode,
+				       ext_block_hdr(bh), depth, pblk);
+		if (err)
+			goto errout;
+	}
 	set_buffer_verified(bh);
 	/*
 	 * If this is a leaf block, cache all of its entries
@@ -870,7 +875,6 @@ int ext4_ext_tree_init(handle_t *handle, struct inode *inode)
 	eh->eh_entries = 0;
 	eh->eh_magic = EXT4_EXT_MAGIC;
 	eh->eh_max = cpu_to_le16(ext4_ext_space_root(inode, 0));
-	eh->eh_generation = 0;
 	ext4_mark_inode_dirty(handle, inode);
 	return 0;
 }
@@ -1127,7 +1131,6 @@ static int ext4_ext_split(handle_t *handle, struct inode *inode,
 	neh->eh_max = cpu_to_le16(ext4_ext_space_block(inode, 0));
 	neh->eh_magic = EXT4_EXT_MAGIC;
 	neh->eh_depth = 0;
-	neh->eh_generation = 0;
 
 	/* move remainder of path[depth] to the new leaf */
 	if (unlikely(path[depth].p_hdr->eh_entries !=
@@ -1205,7 +1208,6 @@ static int ext4_ext_split(handle_t *handle, struct inode *inode,
 		neh->eh_magic = EXT4_EXT_MAGIC;
 		neh->eh_max = cpu_to_le16(ext4_ext_space_block_idx(inode, 0));
 		neh->eh_depth = cpu_to_le16(depth - i);
-		neh->eh_generation = 0;
 		fidx = EXT_FIRST_INDEX(neh);
 		fidx->ei_block = border;
 		ext4_idx_store_pblock(fidx, oldblock);
@@ -3278,10 +3280,7 @@ static int ext4_split_extent_at(handle_t *handle,
 		ext4_ext_mark_unwritten(ex2);
 
 	err = ext4_ext_insert_extent(handle, inode, ppath, &newex, flags);
-	if (err != -ENOSPC && err != -EDQUOT)
-		goto out;
-
-	if (EXT4_EXT_MAY_ZEROOUT & split_flag) {
+	if (err == -ENOSPC && (EXT4_EXT_MAY_ZEROOUT & split_flag)) {
 		if (split_flag & (EXT4_EXT_DATA_VALID1|EXT4_EXT_DATA_VALID2)) {
 			if (split_flag & EXT4_EXT_DATA_VALID1) {
 				err = ext4_ext_zeroout(inode, ex2);
@@ -3307,29 +3306,29 @@ static int ext4_split_extent_at(handle_t *handle,
 					      ext4_ext_pblock(&orig_ex));
 		}
 
-		if (!err) {
-			/* update the extent length and mark as initialized */
-			ex->ee_len = cpu_to_le16(ee_len);
-			ext4_ext_try_to_merge(handle, inode, path, ex);
-			err = ext4_ext_dirty(handle, inode, path + path->p_depth);
-			if (!err)
-				/* update extent status tree */
-				err = ext4_zeroout_es(inode, &zero_ex);
-			/* If we failed at this point, we don't know in which
-			 * state the extent tree exactly is so don't try to fix
-			 * length of the original extent as it may do even more
-			 * damage.
-			 */
-			goto out;
-		}
-	}
+		if (err)
+			goto fix_extent_len;
+		/* update the extent length and mark as initialized */
+		ex->ee_len = cpu_to_le16(ee_len);
+		ext4_ext_try_to_merge(handle, inode, path, ex);
+		err = ext4_ext_dirty(handle, inode, path + path->p_depth);
+		if (err)
+			goto fix_extent_len;
+
+		/* update extent status tree */
+		err = ext4_zeroout_es(inode, &zero_ex);
+
+		goto out;
+	} else if (err)
+		goto fix_extent_len;
+
+out:
+	ext4_ext_show_leaf(inode, path);
+	return err;
 
 fix_extent_len:
 	ex->ee_len = orig_ex.ee_len;
 	ext4_ext_dirty(handle, inode, path + path->p_depth);
-	return err;
-out:
-	ext4_ext_show_leaf(inode, path);
 	return err;
 }
 
@@ -5043,23 +5042,13 @@ int ext4_convert_unwritten_extents(handle_t *handle, struct inode *inode,
 	int ret = 0;
 	int ret2 = 0;
 	struct ext4_map_blocks map;
-	unsigned int credits, blkbits = inode->i_blkbits;
+	unsigned int blkbits = inode->i_blkbits;
+	unsigned int credits = 0;
 
 	map.m_lblk = offset >> blkbits;
 	max_blocks = EXT4_MAX_BLOCKS(len, offset, blkbits);
 
-	/*
-	 * This is somewhat ugly but the idea is clear: When transaction is
-	 * reserved, everything goes into it. Otherwise we rather start several
-	 * smaller transactions for conversion of each extent separately.
-	 */
-	if (handle) {
-		handle = ext4_journal_start_reserved(handle,
-						     EXT4_HT_EXT_CONVERT);
-		if (IS_ERR(handle))
-			return PTR_ERR(handle);
-		credits = 0;
-	} else {
+	if (!handle) {
 		/*
 		 * credits to insert 1 extent into extent tree
 		 */
@@ -5090,9 +5079,38 @@ int ext4_convert_unwritten_extents(handle_t *handle, struct inode *inode,
 		if (ret <= 0 || ret2)
 			break;
 	}
-	if (!credits)
-		ret2 = ext4_journal_stop(handle);
 	return ret > 0 ? ret2 : ret;
+}
+
+int ext4_convert_unwritten_io_end_vec(handle_t *handle, ext4_io_end_t *io_end)
+{
+	int ret, err = 0;
+	struct ext4_io_end_vec *io_end_vec;
+
+	/*
+	 * This is somewhat ugly but the idea is clear: When transaction is
+	 * reserved, everything goes into it. Otherwise we rather start several
+	 * smaller transactions for conversion of each extent separately.
+	 */
+	if (handle) {
+		handle = ext4_journal_start_reserved(handle,
+						     EXT4_HT_EXT_CONVERT);
+		if (IS_ERR(handle))
+			return PTR_ERR(handle);
+	}
+
+	list_for_each_entry(io_end_vec, &io_end->list_vec, list) {
+		ret = ext4_convert_unwritten_extents(handle, io_end->inode,
+						     io_end_vec->offset,
+						     io_end_vec->size);
+		if (ret)
+			break;
+	}
+
+	if (handle)
+		err = ext4_journal_stop(handle);
+
+	return ret < 0 ? ret : err;
 }
 
 /*
